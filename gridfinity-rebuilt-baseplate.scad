@@ -17,10 +17,24 @@ $fa = 8;
 $fs = 0.25;
 
 /* [General Settings] */
-// number of bases along x-axis
+// Sizing method
+sizing_method = 0; // [0:Grid Units, 1:Final Dimensions]
+
+// number of bases along x-axis (only used if sizing_method is 0)
 gridx = 1;
-// number of bases along y-axis
+// number of bases along y-axis (only used if sizing_method is 0)
 gridy = 1;
+
+// desired final length along x-axis in mm (only used if sizing_method is 1)
+final_length_x = 200;
+// desired final length along y-axis in mm (only used if sizing_method is 1)
+final_length_y = 150;
+
+/* [Fit to Drawer] */
+// where to align extra space along x
+fitx = 0; // [-1:0.1:1]
+// where to align extra space along y
+fity = 0; // [-1:0.1:1]
 
 /* [Screw Together Settings - Defaults work for M3 and 4-40] */
 // screw diameter
@@ -32,24 +46,10 @@ screw_spacing = .5;
 // number of screws per grid block
 n_screws = 1; // [1:3]
 
-
-/* [Fit to Drawer] */
-// minimum length of baseplate along x (leave zero to ignore, will automatically fill area if gridx is zero)
-distancex = 0;
-// minimum length of baseplate along y (leave zero to ignore, will automatically fill area if gridy is zero)
-distancey = 0;
-
-// where to align extra space along x
-fitx = 0; // [-1:0.1:1]
-// where to align extra space along y
-fity = 0; // [-1:0.1:1]
-
-
 /* [Styles] */
 
 // baseplate styles
 style_plate = 3; // [0: thin, 1:weighted, 2:skeletonized, 3: screw together, 4: screw together minimal]
-
 
 // hole styles
 style_hole = 0; // [0:none, 1:countersink, 2:counterbore]
@@ -66,9 +66,25 @@ hole_options = bundle_hole_options(refined_hole=false, magnet_hole=enable_magnet
 
 // ===== IMPLEMENTATION ===== //
 
-color("tomato")
-gridfinityBaseplate([gridx, gridy], l_grid, [distancex, distancey], style_plate, hole_options, style_hole, [fitx, fity]);
+// Calculate grid size based on final dimensions
+function calculate_grid_size(length) = ceil(length / l_grid);
 
+// Determine the actual grid size based on the chosen method
+actual_gridx = sizing_method == 0 ? gridx : calculate_grid_size(final_length_x);
+actual_gridy = sizing_method == 0 ? gridy : calculate_grid_size(final_length_y);
+
+// Calculate the actual dimensions based on the grid size
+actual_length_x = actual_gridx * l_grid;
+actual_length_y = actual_gridy * l_grid;
+
+// Output information about the baseplate
+echo(str("Number of Grids per axes (X, Y): ", [actual_gridx, actual_gridy]));
+echo(str("Actual dimensions (X, Y) in mm: ", [actual_length_x, actual_length_y]));
+
+color("tomato")
+gridfinityBaseplate([actual_gridx, actual_gridy], l_grid, 
+                    [actual_length_x, actual_length_y], 
+                    style_plate, hole_options, style_hole, [fitx, fity])
 // ===== CONSTRUCTION ===== //
 
 /**
